@@ -1,0 +1,64 @@
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  /*  ===== attach highlight logic =====  */
+  document.querySelectorAll('.hc-option').forEach(opt => {
+    const input = opt.querySelector('input');
+
+    // initialise highlight for pre‑checked radios
+    if (input.checked) opt.classList.add('hc-checked');
+
+    opt.addEventListener('click', e => {
+      if (input.type === 'checkbox') {
+        input.checked = !input.checked;
+        opt.classList.toggle('hc-checked', input.checked);
+      } else if (input.type === 'radio') {
+        // clear other radios in the same group
+        document
+          .querySelectorAll(`input[name="${input.name}"]`)
+          .forEach(r => r.parentElement.classList.remove('hc-checked'));
+        input.checked = true;
+        opt.classList.add('hc-checked');
+      }
+      e.stopPropagation();
+    });
+  });
+
+  /* ===== price data ===== */
+  const addOn = { 'hc-fridge':45,'hc-cabinet':18,'hc-blinds':20,'hc-oven':30,'hc-window':250,'hc-laundry':15,'hc-baseboard':20 };
+  const tierPrice = { standard:{bed:50,bath:45}, deep:{bed:75,bath:55} };
+
+  /* ===== calculate ===== */
+  document.getElementById('hc-calc').addEventListener('click', () => {
+    const sqft  = +document.getElementById('hc-sqft').value || 0;
+    const beds  = +document.getElementById('hc-bed').value || 0;
+    const baths = +document.getElementById('hc-bath').value || 0;
+    const tier  = document.querySelector('input[name="tier"]:checked').value;
+
+    let total = 60 + sqft * 0.12 + beds * tierPrice[tier].bed + baths * tierPrice[tier].bath;
+    const addNames = [];
+    document.querySelectorAll('.hc-option input[type="checkbox"]:checked')
+            .forEach(c => { total += addOn[c.id]; addNames.push(c.parentElement.textContent.split(' (+')[0]); });
+
+    document.getElementById('hc-total').textContent = `Total Cost: $${total.toFixed(2)}`;
+
+    // prep booking summary
+    const summary = `
+      <p><strong>Quote:</strong> $${total.toFixed(2)}</p>
+      <p><strong>Service:</strong> ${tier.charAt(0).toUpperCase()+tier.slice(1)}</p>
+      <p><strong>Home:</strong> ${sqft} sq ft · ${beds} bed · ${baths} bath</p>
+      ${addNames.length ? `<p><strong>Add‑ons:</strong> ${addNames.join(', ')}</p>` : ''}
+    `;
+    document.getElementById('hc-summary').innerHTML = summary;
+    document.getElementById('hQuote').value   = `$${total.toFixed(2)}`;
+    document.getElementById('hDetails').value = summary.replace(/<[^>]+>/g,'');  // strip tags
+
+    // show Book Now button
+    document.getElementById('hc-book').style.display = 'block';
+  });
+
+  /* ===== modal open / close ===== */
+  const modal = document.getElementById('hc-modal');
+  document.getElementById('hc-book').addEventListener('click', () => modal.classList.add('active'));
+  document.getElementById('hc-close').addEventListener('click', () => modal.classList.remove('active'));
+});
+</script>
